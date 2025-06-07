@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Pipenv
+.venv/       # Pipenv's virtualenv folder
+Pipfile.lock # Optional: Exclude if you don't want dependency versions tracked
+
+# Secrets
+.env
+*.json       # Exclude all JSON files (unless you commit some later)
+
+# IDE (VS Code)
+.vscode/
