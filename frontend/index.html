@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Playlist Creator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>YouTube Playlist Creator</h1>
+    </header>
+    <main>
+        <section class="prompt-section">
+            <div class="prompt-box">
+                <input type="text" id="promptInput" placeholder="Enter your playlist prompt...">
+                <button onclick="handlePrompt()">Create Playlist</button>
+            </div>
+            <p class="example-text">Example: "Create a playlist of songs by Karan Aujla" or "I want to hear songs from the album Timeless by Weeknd"</p>
+        </section>
+        <section class="info-section">
+            <h2>How to Use</h2>
+            <p>We need access to your YouTube account to create playlists on your behalf. Simply enter a prompt with an artist name, album name, or track name, and we'll generate a playlist for you. Your data is not stored in our backend, ensuring your privacy.</p>
+        </section>
+        <section class="privacy-section">
+            <h2>Your Privacy Matters</h2>
+            <p>We do not store any user's credentials or their sign-in history. Your YouTube account access is used solely to create playlists as requested, and no personal data is retained.</p>
+        </section>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
