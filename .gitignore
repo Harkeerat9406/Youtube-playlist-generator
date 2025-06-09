@@ -9,7 +9,7 @@ Pipfile.lock # Optional: Exclude if you don't want dependency versions tracked
 
 # Secrets
 .env
-*.json       # Exclude all JSON files (unless you commit some later)
+client_secrets.json
 
 # IDE (VS Code)
 .vscode/
