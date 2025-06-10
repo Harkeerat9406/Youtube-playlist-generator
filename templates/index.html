@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>YouTube Playlist Creator</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
     <main>
@@ -27,6 +27,7 @@
             <p>We do not store any user's credentials or their sign-in history. Your YouTube account access is used solely to create playlists as requested, and no personal data is retained.</p>
         </section>
     </main>
-    <script src="script.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>
