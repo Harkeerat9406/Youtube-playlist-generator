@@ -90,6 +90,19 @@ button:hover {
     max-width: 600px;
 }
 
+.result-section{
+    padding: 40px 20px;
+    max-width: 800px;
+    width: 100%;
+    text-align: left;
+}
+
+pre{
+    color: #D8D8F6;
+    font-size: 1em;
+    line-height: 1.6;
+}
+
 .info-section, .privacy-section {
     padding: 40px 20px;
     max-width: 800px;
