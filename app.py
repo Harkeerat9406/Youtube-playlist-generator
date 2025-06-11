@@ -33,5 +33,21 @@ def extract_music_data():
     data = json.loads(response_text)
     return jsonify(data)
 
+@app.route('/login')
+def login():
+    flow = Flow.from_client_secrets_file(
+        'client_secrets.json',
+        scopes = ['https://www.googleapis.com/auth/youtube'],
+        redirect_uri = 'http://localhost:5000/oauth2callback'
+    )
+
+    authorization_url, state = flow.authorization_url(
+        access_type = 'offline'
+        include_granted_scopes = 'true'
+    )
+
+    session['state'] = state
+    return redirect(authorization_url)
+
 if __name__ == '__main__':
     app.run(debug = True)
