@@ -1,8 +1,11 @@
-import google.generativeai as genai
-from flask import Flask, jsonify, request, render_template
+#BACKEND library
+from flask import Flask, jsonify, request, render_template, session, redirect, url_for
 import os
 import json
 from dotenv import load_dotenv
+
+#GOOGLE libraries
+import google.generativeai as genai
 
 load_dotenv()
 

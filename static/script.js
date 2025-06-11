@@ -13,8 +13,6 @@ function handlePrompt() {
 
         .then(data => {
             console.log(data);
-            alert('Extracted data: ' + JSON.stringify(data, null, 2))
-
             document.getElementById('resultDisplay').textContent = JSON.stringify(data, null, 2);
         })
         
