@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 #GOOGLE libraries
 import google.generativeai as genai
+from google_auth_oauthlib.flow import Flow
+import uuid
 
 load_dotenv()
 
@@ -42,12 +44,38 @@ def login():
     )
 
     authorization_url, state = flow.authorization_url(
-        access_type = 'offline'
+        access_type = 'offline',
         include_granted_scopes = 'true'
     )
 
     session['state'] = state
     return redirect(authorization_url)
+
+@app.route('/oauth2callback')
+def oauth2callback():
+    state = session['state']
+
+    flow = Flow.from_client_secrets_file(
+        'client_secrets.json',
+        scopes = ['https://www.googleapis.com/auth/youtube'],
+        state = state,
+        redirect_uri = 'http://localhost:5000/oauthcallback'
+    )
+
+    flow.fetch_token(authorization_response = request.url)
+
+    credentials = flow.credentials
+
+    session['credentials'] = {
+        'token': credentials.token,
+        'refresh_token': credentials.refresh_token,
+        'token_uri': credentials.token_uri,
+        'client_id': credentials.client_id,
+        'client_secret': credentials.client_secret,
+        'scopes': credentials.scopes
+    }
+
+    return redirect(url_for('home'))
 
 if __name__ == '__main__':
     app.run(debug = True)
