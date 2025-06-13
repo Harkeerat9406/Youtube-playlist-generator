@@ -10,6 +10,7 @@ from google_auth_oauthlib.flow import Flow
 import uuid
 
 load_dotenv()
+app.secret_key = os.getenv('flask_secret_key')
 
 genai.configure(api_key = os.getenv("gemini_api"))
 model = genai.GenerativeModel("gemini-2.0-flash")
@@ -59,7 +60,7 @@ def oauth2callback():
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
         state = state,
-        redirect_uri = 'http://localhost:5000/oauthcallback'
+        redirect_uri = 'http://localhost:5000/oauth2callback'
     )
 
     flow.fetch_token(authorization_response = request.url)
