@@ -10,6 +10,7 @@ from google_auth_oauthlib.flow import Flow
 import uuid
 
 load_dotenv()
+app = Flask(__name__)
 app.secret_key = os.getenv('flask_secret_key')
 
 genai.configure(api_key = os.getenv("gemini_api"))
