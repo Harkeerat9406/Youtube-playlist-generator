@@ -7,11 +7,13 @@ from dotenv import load_dotenv
 #GOOGLE libraries
 import google.generativeai as genai
 from google_auth_oauthlib.flow import Flow
-import uuid
 
-load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('flask_secret_key')
+
+
+load_dotenv()
+
 
 genai.configure(api_key = os.getenv("gemini_api"))
 model = genai.GenerativeModel("gemini-2.0-flash")
@@ -28,8 +30,6 @@ Do not include anything else except the JSON object in your response.
 USER PROMPT:
 """
 
-app = Flask(__name__)
-app.secret_key = os.getenv('flask_secret_key')
 
 @app.route('/')
 def home():
@@ -59,7 +59,7 @@ def login():
     flow = Flow.from_client_secrets_file(
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
-        redirect_uri = 'http://localhost:5000/oauth2callback'
+        redirect_uri = 'https://eb04-27-0-171-90.ngrok-free.app'
     )
 
     authorization_url, state = flow.authorization_url(
@@ -72,13 +72,15 @@ def login():
 
 @app.route('/oauth2callback')
 def oauth2callback():
+    if 'state' not in session:
+        return "Session expired or state not found. Please <a href='/login'>try again</a>.", 400
     state = session['state']
 
     flow = Flow.from_client_secrets_file(
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
         state = state,
-        redirect_uri = 'http://localhost:5000/oauth2callback'
+        redirect_uri = 'https://eb04-27-0-171-90.ngrok-free.app'
     )
 
     flow.fetch_token(authorization_response = request.url)
