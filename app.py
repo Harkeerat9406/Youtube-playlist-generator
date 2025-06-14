@@ -16,16 +16,33 @@ app.secret_key = os.getenv('flask_secret_key')
 genai.configure(api_key = os.getenv("gemini_api"))
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-system_msg = "SYSTEM MESSAGE:\nYou are an assistant that extracts structured music data from user input. Given a user prompt, return a JSON object with the following fields if available: 'artist', 'album', 'track', 'date'. If any field is missing, omit it from the output. Do not include anything to the output other than the json object. For example, just return {\"artist\": value} or whatever fields are present in the user prompt\n\nUSER PROMPT:\n"
+system_msg = """SYSTEM MESSAGE:
+You are an assistant that extracts structured music data from user input.
+Return a JSON object with any of the following fields if available: "artist", "album", "track", "date".
+
+Each field should be a list if multiple values are mentioned, e.g.:
+{"artist": ["Karan Aujla", "Shubh"], "track": ["Song1", "Song2"]}
+
+Do not include anything else except the JSON object in your response.
+
+USER PROMPT:
+"""
 
 app = Flask(__name__)
+app.secret_key = os.getenv('flask_secret_key')
 
 @app.route('/')
 def home():
     return render_template('index.html')
 
+@app.route('/is_logged_in')
+def is_logged_in():
+    return jsonify({'logged_in': 'credentials' in session})
+
 @app.route('/extract_music_data', methods = ['POST'])
 def extract_music_data():
+    if 'credentials' not in session:
+        return jsonify({'error': 'Not authenticated'}), 401
     req_data = request.get_json()
 
     user_input = req_data.get("prompt", "")
