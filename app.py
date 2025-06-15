@@ -59,7 +59,7 @@ def login():
     flow = Flow.from_client_secrets_file(
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
-        redirect_uri = 'https://eb04-27-0-171-90.ngrok-free.app'
+        redirect_uri = 'http://localhost:5000/oauth2callback'
     )
 
     authorization_url, state = flow.authorization_url(
@@ -80,7 +80,7 @@ def oauth2callback():
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
         state = state,
-        redirect_uri = 'https://eb04-27-0-171-90.ngrok-free.app'
+        redirect_uri = 'http://localhost:5000/oauth2callback'
     )
 
     flow.fetch_token(authorization_response = request.url)
