@@ -35,6 +35,7 @@ USER PROMPT:
 def home():
     return render_template('index.html')
 
+
 @app.route('/is_logged_in')
 def is_logged_in():
     return jsonify({'logged_in': 'credentials' in session})
