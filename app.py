@@ -60,7 +60,7 @@ def login():
     flow = Flow.from_client_secrets_file(
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
-        redirect_uri = 'http://localhost:5000/oauth2callback'
+        redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
     )
 
     authorization_url, state = flow.authorization_url(
@@ -81,7 +81,7 @@ def oauth2callback():
         'client_secrets.json',
         scopes = ['https://www.googleapis.com/auth/youtube'],
         state = state,
-        redirect_uri = 'http://localhost:5000/oauth2callback'
+        redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
     )
 
     flow.fetch_token(authorization_response = request.url)
