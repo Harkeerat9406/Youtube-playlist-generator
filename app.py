@@ -25,7 +25,10 @@ Return a JSON object with any of the following fields if available: "artist", "a
 Each field should be a list if multiple values are mentioned, e.g.:
 {"artist": ["Karan Aujla", "Shubh"], "track": ["Song1", "Song2"]}
 
-Do not include anything else except the JSON object in your response.
+Do not include anything else except the JSON object in your response. There should be no extra symbols or anything.
+For example if user prompt says "I want to hear No Love by shubh from Still Rolling released in 2023", then you should return only the part enclosed within equal to sign below
+
+={"artist": ["Shubh"], "track": ["No Love"], "album": ["Still Rollin"], "date": ["2023"]}=
 
 USER PROMPT:
 """
