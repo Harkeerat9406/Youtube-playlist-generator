@@ -55,7 +55,7 @@ def extract_music_data():
         data = json.loads(response_text)
         return jsonify(data)
     
-    except:
+    except json.JSONDecodeError:
         app.logger.error("Gemini returned non-JSON response: %s", response.text)
         return jsonify({"error": "Could not extract structured data. Try a clearer prompt."}), 500
     
