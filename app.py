@@ -57,8 +57,9 @@ def extract_music_data():
 
 @app.route('/login')
 def login():
-    flow = Flow.from_client_secrets_file(
-        'client_secrets.json',
+    client_secrets = os.getenv('google_client_secret_json')
+    flow = Flow.from_client_config(
+        json.loads(client_secrets),
         scopes = ['https://www.googleapis.com/auth/youtube'],
         redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
     )
