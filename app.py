@@ -49,11 +49,19 @@ def extract_music_data():
     user_input = req_data.get("prompt", "")
 
     prompt = system_msg + user_input
-    response = model.generate_content(prompt)
-    response_text = response.text
-
-    data = json.loads(response_text)
-    return jsonify(data)
+    try:
+        response = model.generate_content(prompt)
+        response_text = response.text
+        data = json.loads(response_text)
+        return jsonify(data)
+    
+    except:
+        app.logger.error("Gemini returned non-JSON response: %s", response.text)
+        return jsonify({"error": "Could not extract structured data. Try a clearer prompt."}), 500
+    
+    except Exception as e:
+        app.logger.exception("Unexpected error during music data extraction")
+        return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/login')
 def login():
