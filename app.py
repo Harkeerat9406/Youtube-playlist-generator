@@ -9,11 +9,11 @@ import requests
 import google.generativeai as genai
 from google_auth_oauthlib.flow import Flow
 
+
+load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('flask_secret_key')
 
-
-load_dotenv()
 with open(os.getenv("google_client_secret_json")) as f:
     client_config = json.load(f)
 
