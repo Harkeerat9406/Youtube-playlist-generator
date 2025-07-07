@@ -14,8 +14,8 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('flask_secret_key')
 
-with open(os.getenv("google_client_secret_json")) as f:
-    client_config = json.load(f)
+client_secret_json_str = os.getenv("google_client_secret_json")
+client_config = json.loads(client_secret_json_str)
 
 
 genai.configure(api_key = os.getenv("gemini_api"))
