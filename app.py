@@ -14,6 +14,8 @@ app.secret_key = os.getenv('flask_secret_key')
 
 
 load_dotenv()
+with open(os.getenv("google_client_secret_json")) as f:
+    client_config = json.load(f)
 
 
 genai.configure(api_key = os.getenv("gemini_api"))
@@ -27,9 +29,9 @@ Each field should be a list if multiple values are mentioned, e.g.:
 {"artist": ["Karan Aujla", "Shubh"], "track": ["Song1", "Song2"]}
 
 Do not include anything else except the JSON object in your response. There should be no extra symbols or anything.
-For example if user prompt says "I want to hear No Love by shubh from Still Rolling released in 2023", then you should return only the part enclosed within equal to sign below
+For example if user prompt says "I want to hear No Love by shubh from Still Rolling released in 2023", then you should only return the way JSON object is present below. ONLY THAT MUCH
 
-={"artist": ["Shubh"], "track": ["No Love"], "album": ["Still Rollin"], "date": ["2023"]}=
+{"artist": ["Shubh"], "track": ["No Love"], "album": ["Still Rollin"], "date": ["2023"]}
 
 USER PROMPT:
 """
@@ -63,7 +65,8 @@ def extract_music_data():
         data = json.loads(response_text)
 
         # Step 2: Create youtube playlist
-        access_token = session['credentials']['access_token']
+        access_token = session.get('credentials', {}).get('token')
+
 
         # Priority: artist > album > track > fallback
         artist_list = data.get('artist', [])
@@ -96,16 +99,18 @@ def extract_music_data():
         return jsonify({"error": "Could not extract structured data. Try a clearer prompt."}), 500
     
     except Exception as e:
-        app.logger.exception("Unexpected error during music data extraction")
+        app.logger.exception("Unexpected error during music data extraction: {e}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+
 
 
 
 @app.route('/login')
 def login():
-    client_secrets = os.getenv('google_client_secret_json')
     flow = Flow.from_client_config(
-        json.loads(client_secrets),
+        client_config,
         scopes = ['https://www.googleapis.com/auth/youtube'],
         redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
     )
@@ -115,6 +120,7 @@ def login():
         include_granted_scopes = 'true'
     )
 
+    print(f'Redirecting to Google Auth: {authorization_url}')  #Temporary
     session['state'] = state
     return redirect(authorization_url)
 
@@ -126,9 +132,8 @@ def oauth2callback():
         return "Session expired or state not found. Please <a href='/login'>try again</a>.", 400
     state = session['state']
 
-    client_secrets = os.getenv('google_client_secret_json')
     flow = Flow.from_client_config(
-        json.loads(client_secrets),
+        client_config,
         scopes = ['https://www.googleapis.com/auth/youtube'],
         state = state,
         redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
