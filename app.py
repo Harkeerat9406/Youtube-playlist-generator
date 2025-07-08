@@ -130,7 +130,6 @@ def login():
         include_granted_scopes = 'true'
     )
 
-    print(f'Redirecting to Google Auth: {authorization_url}')  #Temporary
     session['state'] = state
     return redirect(authorization_url)
 
@@ -142,27 +141,32 @@ def oauth2callback():
         return "Session expired or state not found. Please <a href='/login'>try again</a>.", 400
     state = session['state']
 
-    flow = Flow.from_client_config(
-        client_config,
-        scopes = ['https://www.googleapis.com/auth/youtube'],
-        state = state,
-        redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
-    )
+    try:
+        flow = Flow.from_client_config(
+            client_config,
+            scopes = ['https://www.googleapis.com/auth/youtube'],
+            state = session['state'],
+            redirect_uri = 'https://morphify-delta.vercel.app/oauth2callback'
+        )
 
-    flow.fetch_token(authorization_response = request.url)
+        flow.fetch_token(authorization_response = request.url)
 
-    credentials = flow.credentials
+        credentials = flow.credentials
 
-    session['credentials'] = {
-        'token': credentials.token,
-        'refresh_token': credentials.refresh_token,
-        'token_uri': credentials.token_uri,
-        'client_id': credentials.client_id,
-        'client_secret': credentials.client_secret,
-        'scopes': credentials.scopes
-    }
+        session['credentials'] = {
+            'token': credentials.token,
+            'refresh_token': credentials.refresh_token,
+            'token_uri': credentials.token_uri,
+            'client_id': credentials.client_id,
+            'client_secret': credentials.client_secret,
+            'scopes': credentials.scopes
+        }
 
-    return redirect(url_for('home'))
+        return redirect(url_for('home'))
+    
+    except Exception as e:
+        app.logger.error(f"OAuth error: {str(e)}")
+        return "Authetication failed. Please try again.", 400
 
 
 
