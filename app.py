@@ -104,35 +104,35 @@ def extract_music_data():
         response_text = response.text
         data = json.loads(response_text)
 
-        # Step 2: Create youtube playlist
+        # Step 2: Create search queries based on available data
+        search_queries = generate_search_queries(data)
+
+        # Step 3: Create playlist
         access_token = session.get('credentials', {}).get('token')
-
-
-        # Priority: artist > album > track > fallback
-        artist_list = data.get('artist', [])
-        album_list = data.get('album', [])
-        track_list = data.get('track', [])
-
-        if artist_list:
-            playlist_title = f"{artist_list[0]} Playlist"
-        elif album_list:
-            playlist_title = f"{album_list[0]} Album Playlist"
-        elif track_list:
-            playlist_title = f"Playlist with {track_list[0]}"
-        else:
-            playlist_title = "My Music Playlist"
-        
-        print(f'Playlist Title: {playlist_title}')  #Temporary 
-
-        playlist_id = create_youtube_playlist(access_token, playlist_title)
+        playlist_title = generate_playlist_title(data)
+        playlist_id = create_youtube_playlist(access_token, playlist_title)        
 
         if not playlist_id:
             return jsonify({'error': 'Failed to create playlist on Youtube'}), 500
         
-        # Step 3: Add playlist ID to response
-        data['playlist_id'] = playlist_id
+        # Step 4: Seach and add videos
+        added_videos = 0
+        for query in search_queries:
+            video_ids = search_youtube_videos(access_token, query)
+            for video_id in video_ids:
+                if add_video_to_playlist(access_token, playlist_id, video_id):
+                    added_videos += 1
+                if added_videos >= 50:
+                    break
+            if added_videos >= 50:
+                break
+        # data['playlist_id'] = playlist_id
 
-        return jsonify(data)
+        return jsonify({
+            'playlist_id' : playlist_id,
+            'videos_added' : added_videos,
+            'search_queries' : search_queries
+        })
     
     except json.JSONDecodeError:
         app.logger.error("Gemini returned non-JSON response: %s", response.text)
@@ -143,7 +143,117 @@ def extract_music_data():
         return jsonify({"error": "Internal server error"}), 500
 
 
+def generate_search_queries(data):
+    """Generate YouTube search queries based on extracted data"""
+    queries = []
+    
+    # 1. Specific tracks (highest priority)
+    if data.get('track'):
+        for track in data.get('track', []):
+            # Include artist if available for better specificity
+            if data.get('artist'):
+                for artist in data.get('artist', []):
+                    queries.append(f"{track} by {artist}")
+            else:
+                queries.append(track)
+    
+    # 2. Album searches (medium priority)
+    if data.get('album') and not queries:
+        for album in data.get('album', []):
+            # Include artist if available
+            if data.get('artist'):
+                for artist in data.get('artist', []):
+                    queries.append(f"{album} album by {artist}")
+            else:
+                queries.append(f"{album} full album")
+    
+    # 3. Artist + year (lowest priority)
+    if data.get('artist') and not queries:
+        for artist in data.get('artist', []):
+            if data.get('date'):
+                queries.append(f"{artist} songs {data['date'][0]}")
+            else:
+                queries.append(f"{artist} songs")
+    
+    # Fallback if no specific data
+    if not queries:
+        queries.append("popular songs")
+    
+    return queries
 
+def generate_playlist_title(data):
+    """Generate appropriate playlist title based on content"""
+    if data.get('track'):
+        if len(data['track']) > 1:
+            return f"{len(data['track'])} Selected Tracks"
+        return f"{data['track'][0]}"
+    
+    if data.get('album'):
+        if data.get('artist'):
+            return f"{data['artist'][0]} - {data['album'][0]}"
+        return f"{data['album'][0]} Album"
+    
+    if data.get('artist'):
+        if data.get('date'):
+            return f"{data['artist'][0]} ({data['date'][0]})"
+        return f"{data['artist'][0]} Mix"
+    
+    return "Generated Playlist"
+
+def search_youtube_videos(access_token, query, max_results=5):
+    """Search YouTube for videos matching the query"""
+    url = "https://www.googleapis.com/youtube/v3/search"
+    headers = {'Authorization': f'Bearer {access_token}'}
+    params = {
+        'part': 'snippet',
+        'q': query,
+        'type': 'video',
+        'maxResults': max_results
+    }
+    
+    response = requests.get(url, headers=headers, params=params)
+    
+    if response.status_code == 401:
+        new_token = refresh_google_token()
+        if new_token:
+            headers['Authorization'] = f'Bearer {new_token}'
+            response = requests.get(url, headers=headers, params=params)
+    
+    if response.status_code == 200:
+        return [item['id']['videoId'] for item in response.json().get('items', [])]
+    return []
+
+def add_video_to_playlist(access_token, playlist_id, video_id):
+    """Add a video to the specified playlist"""
+    url = "https://www.googleapis.com/youtube/v3/playlistItems"
+    headers = {
+        'Authorization': f'Bearer {access_token}',
+        'Content-Type': 'application/json'
+    }
+    body = {
+        "snippet": {
+            "playlistId": playlist_id,
+            "resourceId": {
+                "kind": "youtube#video",
+                "videoId": video_id
+            }
+        }
+    }
+    
+    response = requests.post(
+        url,
+        headers=headers,
+        json=body,
+        params={'part': 'snippet'}
+    )
+    
+    if response.status_code == 401:
+        new_token = refresh_google_token()
+        if new_token:
+            headers['Authorization'] = f'Bearer {new_token}'
+            response = requests.post(url, headers=headers, json=body, params={'part': 'snippet'})
+    
+    return response.status_code == 200
 
 
 
