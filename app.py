@@ -4,6 +4,8 @@ import os
 import json
 from dotenv import load_dotenv
 import requests
+import time
+from datetime import timedelta
 
 #GOOGLE libraries
 import google.generativeai as genai
@@ -13,6 +15,34 @@ from google_auth_oauthlib.flow import Flow
 load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('flask_secret_key')
+
+app.config.update(
+        SESSION_COOKIE_SECURE=True,                 # Essential for HTTPS
+    SESSION_COOKIE_HTTPONLY=True,                   # Prevent XSS
+    SESSION_COOKIE_SAMESITE='Lax',                  # Balance security/compatibility
+    PERMANENT_SESSION_LIFETIME=timedelta(hours=1),  # Browser-side expiry
+    SESSION_REFRESH_EACH_REQUEST=True               # Update expiry on each request
+)
+
+
+@app.before_request
+def enforce_session_expiry():
+    """Force clear sessions older than 1 hour"""
+    CREDENTIALS_KEY = 'credentials'
+    
+    if CREDENTIALS_KEY in session:
+        # Get last activity time (default to 0 if missing)
+        last_active = session.get('session_last_active', 0)
+        
+        # If older than 1 hour (3600 seconds)
+        if time.time() - last_active > 3600:
+            session.clear()  # Nuclear option
+            print("Cleared expired session")
+            return
+        
+        # Always update activity timestamp
+        session['session_last_active'] = time.time()
+
 
 client_config = {
     "web": {
@@ -119,6 +149,8 @@ def extract_music_data():
 
 @app.route('/login')
 def login():
+    session.clear()
+
     flow = Flow.from_client_config(
         client_config,
         scopes = ['https://www.googleapis.com/auth/youtube'],
@@ -127,10 +159,15 @@ def login():
 
     authorization_url, state = flow.authorization_url(
         access_type = 'offline',
-        include_granted_scopes = 'true'
+        include_granted_scopes = 'true',
+        prompt='consent'        #Ensures refresh token is returned
     )
 
     session['state'] = state
+    session['session_last_active'] = time.time()
+
+    response= redirect(authorization_url)
+    response.headers['Cache-Control'] = 'no-store, must-revalidate'
     return redirect(authorization_url)
 
 

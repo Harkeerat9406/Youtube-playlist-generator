@@ -13,3 +13,4 @@ client_secrets.json
 
 # IDE (VS Code)
 .vscode/
+old_code.py
