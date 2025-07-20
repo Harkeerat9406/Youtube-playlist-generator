@@ -65,11 +65,13 @@ system_msg = """SYSTEM MESSAGE:
 You are an assistant that extracts structured music data from user input.
 Return a JSON object with any of the following fields if available: "artist", "album", "track", "date".
 
-Each field should be a list if multiple values are mentioned, e.g.:
-{"artist": ["Karan Aujla", "Shubh"], "track": ["Song1", "Song2"]}
+
+Separate artist with their track or album name by searching web whenever mentioned properly. For example if the prompt says "I want to hear 0 to 100 by Sidhu Moosewala and Antidote by Karan Aujla" then  
+returned JSON object should be
+{"track": [{"name": "0 to 100", "artist": "Sidhu Moosewala"}, {"name": "Antidote", "artist": "Karan Aujla"}]}
 
 Do not include anything else except the JSON object in your response. There should be no extra symbols or anything.
-For example if user prompt says "I want to hear No Love by shubh from Still Rolling released in 2023", then you should only return the way JSON object is present below. ONLY THAT MUCH
+For example if user prompt says "I want to hear No Love by shubh from Still Rollinn released in 2023", then you should only return the way JSON object is present below. ONLY THAT MUCH
 
 {"artist": ["Shubh"], "track": ["No Love"], "album": ["Still Rollin"], "date": ["2023"]}
 
@@ -143,19 +145,23 @@ def extract_music_data():
         return jsonify({"error": "Internal server error"}), 500
 
 
+
 def generate_search_queries(data):
     """Generate YouTube search queries based on extracted data"""
     queries = []
     
     # 1. Specific tracks (highest priority)
     if data.get('track'):
-        for track in data.get('track', []):
-            # Include artist if available for better specificity
-            if data.get('artist'):
-                for artist in data.get('artist', []):
-                    queries.append(f"{track} by {artist}")
-            else:
-                queries.append(track)
+        for item in data['track']:
+            if isinstance(item, dict):  # Paired track-artist
+                queries.append(f"{item['name']} {item['artist']} official")
+            else:  # Unpaired track
+                if data.get('artist'):   #Use first artist if available
+                    queries.append(f"{item}  {data['artist'][0]} official")
+                else:
+                    queries.append(f"{item} official music")
+
+    
     
     # 2. Album searches (medium priority)
     if data.get('album') and not queries:
@@ -200,7 +206,7 @@ def generate_playlist_title(data):
     
     return "Generated Playlist"
 
-def search_youtube_videos(access_token, query, max_results=5):
+def search_youtube_videos(access_token, query, max_results=1):
     """Search YouTube for videos matching the query"""
     url = "https://www.googleapis.com/youtube/v3/search"
     headers = {'Authorization': f'Bearer {access_token}'}
