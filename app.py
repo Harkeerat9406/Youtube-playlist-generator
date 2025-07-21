@@ -119,7 +119,6 @@ def extract_music_data():
         #Step 1: Call gemini to extract structured music info
         response = model.generate_content(prompt) 
         data = parse_gemini_response(response.text)
-        app.logger.info("Gemini sent: %s", data)       #To view what gemini sent
 
         # Step 2: Create search queries based on available data
         search_queries = generate_search_queries(data)
