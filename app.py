@@ -112,7 +112,7 @@ def extract_music_data():
     try:
         #Step 1: Call gemini to extract structured music info
         response = model.generate_content(prompt)
-        response_text = response.text
+        response_text = response.text.strip("'''json").strip() 
         data = json.loads(response_text)
 
         # Step 2: Create search queries based on available data
