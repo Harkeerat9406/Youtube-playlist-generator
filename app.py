@@ -60,7 +60,7 @@ client_config = {
 
 
 genai.configure(api_key = os.getenv("gemini_api"))
-model = genai.GenerativeModel("gemini-2.5-flash")
+model = genai.GenerativeModel("gemini-2.5-pro")
 
 system_msg = """SYSTEM MESSAGE:
 You are an assistant that extracts structured music data from user input.
