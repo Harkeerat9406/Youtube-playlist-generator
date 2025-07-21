@@ -112,7 +112,7 @@ def extract_music_data():
     try:
         #Step 1: Call gemini to extract structured music info
         response = model.generate_content(prompt)
-        response_text = response.text.strip("'''json").strip() 
+        response_text = response.text.strip("'''json").strip("'''").strip() 
         data = json.loads(response_text)
 
         # Step 2: Create search queries based on available data
@@ -146,7 +146,7 @@ def extract_music_data():
         })
     
     except json.JSONDecodeError:
-        app.logger.error("Gemini returned non-JSON response: %s", response.text)
+        app.logger.error("Gemini returned non-JSON response: %s", response_text)
         return jsonify({"error": "Could not extract structured data. Try a clearer prompt."}), 500
     
     except Exception as e:
