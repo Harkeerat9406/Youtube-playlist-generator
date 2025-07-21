@@ -111,9 +111,8 @@ def extract_music_data():
 
     try:
         #Step 1: Call gemini to extract structured music info
-        response = model.generate_content(prompt)
-        response_text = response.text.strip("'''json").strip("'''").strip() 
-        data = json.loads(response_text)
+        response = model.generate_content(prompt) 
+        data = parse_gemini_response(response.text)
 
         # Step 2: Create search queries based on available data
         search_queries = generate_search_queries(data)
@@ -146,13 +145,32 @@ def extract_music_data():
         })
     
     except json.JSONDecodeError:
-        app.logger.error("Gemini returned non-JSON response: %s", response_text)
+        app.logger.error("Gemini returned non-JSON response: %s", response.text)
         return jsonify({"error": "Could not extract structured data. Try a clearer prompt."}), 500
     
     except Exception as e:
         app.logger.exception("Unexpected error during music data extraction: {e}")
         return jsonify({"error": "Internal server error"}), 500
 
+
+def parse_gemini_response(response_text):
+    """Robustly handle Gemini's JSON responses which may include Markdown formatting"""
+    try:
+        # Try direct JSON parse first
+        return json.loads(response_text)
+    except json.JSONDecodeError:
+        try:
+            # Handle Markdown-wrapped JSON (```json ... ```)
+            stripped = response_text.strip().strip("```json").strip("```").strip('\n').strip()
+            return json.loads(stripped)
+        except json.JSONDecodeError:
+            try:
+                # Handle case where response might have leading/trailing quotes
+                stripped = response_text.strip().strip('"').strip("'").strip()
+                return json.loads(stripped)
+            except json.JSONDecodeError as e:
+                app.logger.error(f"Failed to parse Gemini response: {response_text}")
+                raise ValueError("Could not parse Gemini response") from e
 
 
 def generate_search_queries(data):
