@@ -5,7 +5,7 @@ import json
 from dotenv import load_dotenv
 import requests
 import time
-from datetime import timedelta
+import datetime
 
 #GOOGLE libraries
 import google.generativeai as genai
@@ -59,11 +59,17 @@ client_config = {
 
 
 genai.configure(api_key = os.getenv("gemini_api"))
-model = genai.GenerativeModel("gemini-2.5-pro")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 system_msg = """SYSTEM MESSAGE:
 You are an assistant that extracts structured music data from user input.
 Return a JSON object with any of the following fields if available: "artist", "track"
+You MUST:
+1. Verify album tracklists ONLY from official sources (Spotify, Apple Music)
+2. Cross-check with music databases (Discogs, AllMusic)
+3. If uncertain, return empty list
+4. NEVER invent songs that don't exist
+
 
 If the user has mentioned an album name from any artist, search web and list down the songs in that album separately. For example if prompt says "Play Karan aujla songs from album Four Me"
 then in such case since album name is mentioned, search web for the songs released in that album and return a json object of the form
@@ -113,6 +119,7 @@ def extract_music_data():
         #Step 1: Call gemini to extract structured music info
         response = model.generate_content(prompt) 
         data = parse_gemini_response(response.text)
+        app.logger.info("Gemini sent: %s", data)       #To view what gemini sent
 
         # Step 2: Create search queries based on available data
         search_queries = generate_search_queries(data)
@@ -145,7 +152,7 @@ def extract_music_data():
         })
     
     except json.JSONDecodeError:
-        app.logger.error("Gemini returned non-JSON response: %s", response.text)
+        app.logger.error("Gemini returned non-JSON response: %s", data)
         return jsonify({"error": "Could not extract structured data. Try a clearer prompt."}), 500
     
     except Exception as e:
@@ -194,24 +201,23 @@ def generate_search_queries(data):
     
     return queries[:50]
 
+
+
 def generate_playlist_title(data):
-    """Generate appropriate playlist title based on content"""
+    """Generate playlist title using first track name + date"""
+    date_str = datetime.now().strftime("%d%b")  # e.g. "15Aug"
+    
     if data.get('track'):
-        if len(data['track']) > 1:
-            return f"{len(data['track'])} Selected Tracks"
-        return f"{data['track'][0]}"
+        tracks = data['track']
+        if tracks:  # Check if tracks list is not empty
+            first_track = tracks[0]
+            track_name = first_track['name']
+            return f"{track_name} - {date_str}"
     
-    if data.get('album'):
-        if data.get('artist'):
-            return f"{data['artist'][0]} - {data['album'][0]}"
-        return f"{data['album'][0]} Album"
-    
-    if data.get('artist'):
-        if data.get('date'):
-            return f"{data['artist'][0]} ({data['date'][0]})"
-        return f"{data['artist'][0]} Mix"
-    
-    return "Generated Playlist"
+    # Fallback if no tracks found
+    return f"My Playlist - {date_str}"
+
+
 
 def search_youtube_videos(access_token, query, max_results=1):
     """Search YouTube for videos matching the query"""
@@ -221,9 +227,7 @@ def search_youtube_videos(access_token, query, max_results=1):
         'part': 'snippet',
         'q': query,
         'type': 'video',
-        'maxResults': max_results,
-        'videoCategoryId': 10,     # Music category      
-        'videoDuration': 'medium'    #Filters out short and long mixes
+        'maxResults': max_results
     }
     
     response = requests.get(url, headers=headers, params=params)
@@ -237,6 +241,8 @@ def search_youtube_videos(access_token, query, max_results=1):
     if response.status_code == 200:
         return [item['id']['videoId'] for item in response.json().get('items', [])]
     return []
+
+
 
 def add_video_to_playlist(access_token, playlist_id, video_id):
     """Add a video to the specified playlist"""
