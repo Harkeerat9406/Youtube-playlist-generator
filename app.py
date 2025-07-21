@@ -80,8 +80,10 @@ songs from album, only the one which has been asked for. Return all songs from a
 In case no album name or track name has been mentioned, for example if prompt says "Play karan aujla songs released in 2025", then search for songs released in that time period and return songs with 
 artist name in the same format as above.
 Also if there is a mixed prompt with an album name and a track name from same or separate artists, again in the same format list all the songs each with artist name as specfied earlier.
+BE ABSOLUTELY SURE WITH THE TRACK NAMES AND DO NOT GIVE ANY RANDOM SONGS.
 
-Do not include anything else except the JSON object in your response. There should be no extra symbols or anything. Just stick to the format I have provided.
+Just stick to the format I have provided. No need to write any explanation or any sort or symbols except the JSON part. There is no need for quotation marks or any sort or symbols. Strictly return
+only the JSON object.
 USER PROMPT:
 """
 
