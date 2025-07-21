@@ -121,3 +121,19 @@ p {
     font-size: 1em;
     line-height: 1.6;
 }
+
+.playlist-link {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background-color: #FF0000;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: bold;
+    transition: background-color 0.3s;
+}
+
+.playlist-link:hover {
+    background-color: #CC0000;
+}

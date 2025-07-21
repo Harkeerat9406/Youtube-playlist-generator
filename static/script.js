@@ -35,6 +35,16 @@ function handlePrompt() {
                     const data = await response.json();
                     console.log(data);
                     document.getElementById('resultDisplay').textContent = JSON.stringify(data, null, 2);
+
+                    // Display playlist link if available
+                    if (data.playlist_id) {
+                        const playlistUrl = `https://www.youtube.com/playlist?list=${data.playlist_id}`;
+                        playlistLinkElement.innerHTML = `
+                            <a href="${playlistUrl}" target="_blank" class="playlist-link">
+                                🎵 Open Your Playlist on YouTube 🎵
+                            </a>
+                        `;
+                    }
                 })
                 .catch(error => {
                     console.error('Error:', error);
