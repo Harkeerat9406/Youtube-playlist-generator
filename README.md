@@ -41,7 +41,7 @@ and converts them into curated, unlisted YouTube playlists on your personal acco
 - 📁 Automatically creates unlisted playlists with official music videos only
 - ♻️ Token refresh handled for uninterrupted access
 - ❌ Prevents duplicate playlist creation with timestamped titles
-- 🌐 Hosted securely with HTTPS support via [Vercel](https://vercel.com)
+- 🌐 Hosted securely with HTTPS support via [Vercel](https://morphify-delta.vercel.app/)
 
 ---
 
