@@ -120,6 +120,7 @@ def extract_music_data():
         #Step 1: Call gemini to extract structured music info
         response = model.generate_content(prompt) 
         data = parse_gemini_response(response.text)
+        app.logger.info("Gemini response: %s", data)
 
         # Step 2: Create search queries based on available data
         search_queries = generate_search_queries(data)
@@ -205,7 +206,7 @@ def generate_search_queries(data):
 
 def generate_playlist_title(data):
     """Generate playlist title using first track name + date"""
-    date_str = datetime.now().strftime("%d%b")  # e.g. "15Aug"
+    date_str = datetime.datetime.now().strftime("%d%b")  # e.g. "15Aug"
     
     if data.get('track'):
         tracks = data['track']
