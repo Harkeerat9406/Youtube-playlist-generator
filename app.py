@@ -59,22 +59,29 @@ client_config = {
 
 
 genai.configure(api_key = os.getenv("gemini_api"))
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-2.5-pro")
 
 system_msg = """SYSTEM MESSAGE:
 You are an assistant that extracts structured music data from user input.
-Return a JSON object with any of the following fields if available: "artist", "album", "track", "date".
+Return a JSON object with any of the following fields if available: "artist", "track"
 
+If the user has mentioned an album name from any artist, search web and list down the songs in that album separately. For example if prompt says "Play Karan aujla songs from album Four Me"
+then in such case since album name is mentioned, search web for the songs released in that album and return a json object of the form
+{"track": [{"name": "IDK HOW", "artist": "Karan Aujla"}, {"name": "Antidote", "artist": "Karan Aujla"}, {"Who They": "Antidote", "artist": "Karan Aujla"}, {"name": Y.D.G.", "artist": "Karan Aujla"}]}
 
 Separate artist with their track or album name by searching web whenever mentioned properly. For example if the prompt says "I want to hear 0 to 100 by Sidhu Moosewala and Antidote by Karan Aujla" then  
 returned JSON object should be
 {"track": [{"name": "0 to 100", "artist": "Sidhu Moosewala"}, {"name": "Antidote", "artist": "Karan Aujla"}]}
 
-Do not include anything else except the JSON object in your response. There should be no extra symbols or anything.
-For example if user prompt says "I want to hear No Love by shubh from Still Rollinn released in 2023", then you should only return the way JSON object is present below. ONLY THAT MUCH
+For example if user prompt says "I want to hear No Love by shubh from album Still Rollinn released in 2023", here since only a particular track has been asked from album so no need to return all
+songs from album, only the one which has been asked for. Return all songs from album only when full album has been asked and no particular song from album is mentioned. So the JSON object should be
+{"track": [{"name": "No Love", "artist" : shubh}]}
 
-{"artist": ["Shubh"], "track": ["No Love"], "album": ["Still Rollin"], "date": ["2023"]}
+In case no album name or track name has been mentioned, for example if prompt says "Play karan aujla songs released in 2025", then search for songs released in that time period and return songs with 
+artist name in the same format as above.
+Also if there is a mixed prompt with an album name and a track name from same or separate artists, again in the same format list all the songs each with artist name as specfied earlier.
 
+Do not include anything else except the JSON object in your response. There should be no extra symbols or anything. Just stick to the format I have provided.
 USER PROMPT:
 """
 
@@ -160,32 +167,12 @@ def generate_search_queries(data):
                     queries.append(f"{item}  {data['artist'][0]} official")
                 else:
                     queries.append(f"{item} official music")
-
-    
-    
-    # 2. Album searches (medium priority)
-    if data.get('album') and not queries:
-        for album in data.get('album', []):
-            # Include artist if available
-            if data.get('artist'):
-                for artist in data.get('artist', []):
-                    queries.append(f"{album} album by {artist}")
-            else:
-                queries.append(f"{album} full album")
-    
-    # 3. Artist + year (lowest priority)
-    if data.get('artist') and not queries:
-        for artist in data.get('artist', []):
-            if data.get('date'):
-                queries.append(f"{artist} songs {data['date'][0]}")
-            else:
-                queries.append(f"{artist} songs")
     
     # Fallback if no specific data
     if not queries:
         queries.append("popular songs")
     
-    return queries
+    return queries[:50]
 
 def generate_playlist_title(data):
     """Generate appropriate playlist title based on content"""
@@ -214,7 +201,9 @@ def search_youtube_videos(access_token, query, max_results=1):
         'part': 'snippet',
         'q': query,
         'type': 'video',
-        'maxResults': max_results
+        'maxResults': max_results,
+        'videoCategoryId': 10,     # Music category      
+        'videoDuration': 'medium'    #Filters out short and long mixes
     }
     
     response = requests.get(url, headers=headers, params=params)
